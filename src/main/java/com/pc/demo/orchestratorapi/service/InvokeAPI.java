@@ -27,9 +27,9 @@ public class InvokeAPI {
 
 	public String callOrchestratorAPI(String clientId, String clientSecret, String scope, String grantType,
 			String orchestratorBaseURL) {
-		
-		System.out.println("Inside callOrchestratorAPI().....");
-		
+
+		System.out.println("\nInside callOrchestratorAPI().....");
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", "application/json");
 		headers.set("X-UIPATH-TenantName", "Default");
@@ -44,14 +44,14 @@ public class InvokeAPI {
 			releaseKey = getReleaseKey(accessToken, orchestratorBaseURL, headers);
 		}
 
-		System.out.println("Completed callOrchestratorAPI() !");
+		System.out.println("\nCompleted callOrchestratorAPI() !");
 		return releaseKey;
 	}
 
 	private String getAccessToken(String clientId, String clientSecret, String scope, String grantType,
 			String orchestratorBaseURL, HttpHeaders headers) {
-		System.out.println("Inside getAccessToken().....");
-		
+		System.out.println("\nInside getAccessToken().....");
+
 		String apiUrl = orchestratorBaseURL + "identity/connect/token";
 		String accessToken = null;
 		try {
@@ -62,11 +62,11 @@ public class InvokeAPI {
 			URI uri = new URI(apiUrl);
 			System.out.println("URI: " + uri.toString());
 			HttpEntity<String> request = new HttpEntity<>(payload, headers);
-			
+
 			System.out.println("API Invocation started !");
 			ResponseEntity<String> response = new RestTemplate().postForEntity(uri, request, String.class);
 			System.out.println("API Invocation completed !");
-			
+
 			if (response != null) {
 				JSONObject jsonObject = new JSONObject(response.getBody());
 				accessToken = jsonObject.get("access_token").toString();
@@ -86,8 +86,8 @@ public class InvokeAPI {
 	}
 
 	private String getReleaseKey(String accessToken, String orchestratorBaseURL, HttpHeaders headers) {
-		System.out.println("Inside getReleaseKey().....");
-		
+		System.out.println("\nInside getReleaseKey().....");
+
 		String releaseKey = null;
 		try {
 			String processName = "FIPC_Maestro_POC";
@@ -100,11 +100,11 @@ public class InvokeAPI {
 			URI uri = new URI(apiUrl);
 			System.out.println("URI: " + uri.toString());
 			HttpEntity<Void> request = new HttpEntity<>(headers);
-			
+
 			System.out.println("API Invocation started !");
 			ResponseEntity<String> response = new RestTemplate().exchange(uri, HttpMethod.GET, request, String.class);
 			System.out.println("API Invocation completed !");
-			
+
 			if (response != null) {
 				JSONObject jsonObject = new JSONObject(response.getBody());
 				int processCount = jsonObject.getInt("@odata.count");
