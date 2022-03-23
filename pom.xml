@@ -10,7 +10,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<groupId>com.pc.demoo</groupId>
+	<groupId>com.pc.demo</groupId>
 	<artifactId>orchestrator-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>orchestrator-api</name>

@@ -32,14 +32,9 @@ public class Controller {
 		String scope = env.getProperty("scope");
 		String grantType = env.getProperty("grantType");
 		String orchestratorBaseURL = env.getProperty("orchestratorBaseURL");
-
-		System.setProperty("https.proxyHost", env.getProperty("https_proxyHost"));
-		System.setProperty("https.proxyPort", env.getProperty("https_proxyPort"));
+		String certFilePath = System.getenv("certFilePath");
 
 		System.out.println("\n==== Environment Variables ====");
-		System.out.println("scope => " + scope);
-		System.out.println("grantType => " + grantType);
-		System.out.println("orchestratorBaseURL => " + orchestratorBaseURL);
 		if (clientId != null && clientId.length() > 5) {
 			System.out.println("clientId => " + clientId.substring(0, 4));
 		} else {
@@ -50,9 +45,17 @@ public class Controller {
 		} else {
 			System.out.println("clientSecret not available");
 		}
+		System.out.println("scope => " + scope);
+		System.out.println("grantType => " + grantType);
+		System.out.println("orchestratorBaseURL => " + orchestratorBaseURL);
+		System.out.println("certFilePath => " + certFilePath);
+		
+		System.setProperty("https.proxyHost", env.getProperty("https_proxyHost"));
+		System.setProperty("https.proxyPort", env.getProperty("https_proxyPort"));
 		System.out.println("proxyHost => " + System.getProperty("https.proxyHost"));
 		System.out.println("proxyPort => " + System.getProperty("https.proxyPort"));
 
-		return invokeAPI.callOrchestratorAPI(clientId, clientSecret, scope, grantType, orchestratorBaseURL);
+		return invokeAPI.callOrchestratorAPI(clientId, clientSecret, scope, grantType, orchestratorBaseURL,
+				certFilePath);
 	}
 }

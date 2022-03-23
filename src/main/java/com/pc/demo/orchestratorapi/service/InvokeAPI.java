@@ -1,8 +1,21 @@
 package com.pc.demo.orchestratorapi.service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 
 import org.json.JSONObject;
 import org.springframework.context.annotation.Bean;
@@ -26,9 +39,16 @@ public class InvokeAPI {
 	}
 
 	public String callOrchestratorAPI(String clientId, String clientSecret, String scope, String grantType,
-			String orchestratorBaseURL) {
+			String orchestratorBaseURL, String certFilePath) {
+		System.out.println("Inside callOrchestratorAPI().....");
 
-		System.out.println("\nInside callOrchestratorAPI().....");
+		if (certFilePath != null) {
+			try {
+				createTrustStore(certFilePath);
+			} catch (Exception e) {
+				return ("Exception while creating truststore: " + e);
+			}
+		}
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", "application/json");
@@ -44,13 +64,13 @@ public class InvokeAPI {
 			releaseKey = getReleaseKey(accessToken, orchestratorBaseURL, headers);
 		}
 
-		System.out.println("\nCompleted callOrchestratorAPI() !");
+		System.out.println("Completed callOrchestratorAPI() !");
 		return releaseKey;
 	}
 
 	private String getAccessToken(String clientId, String clientSecret, String scope, String grantType,
 			String orchestratorBaseURL, HttpHeaders headers) {
-		System.out.println("\nInside getAccessToken().....");
+		System.out.println("Inside getAccessToken().....");
 
 		String apiUrl = orchestratorBaseURL + "identity/connect/token";
 		String accessToken = null;
@@ -86,7 +106,7 @@ public class InvokeAPI {
 	}
 
 	private String getReleaseKey(String accessToken, String orchestratorBaseURL, HttpHeaders headers) {
-		System.out.println("\nInside getReleaseKey().....");
+		System.out.println("Inside getReleaseKey().....");
 
 		String releaseKey = null;
 		try {
@@ -128,5 +148,55 @@ public class InvokeAPI {
 
 		System.out.println("Completed getReleaseKey() !");
 		return releaseKey;
+	}
+
+	private void createTrustStore(String certFilePath)
+			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+		System.out.println("Inside createTrustStore().....");
+
+		// https://stackoverflow.com/questions/58457063/how-to-call-ssl-endpoint-fon-aws-lambda-function
+
+		// Declare path of trust store and create file
+		String trustStorePath = "/tmp/trust";
+		// try creating above directory and path if you get error no such file
+
+		Path dir = Paths.get(trustStorePath);
+		if (!Files.exists(dir)) {
+			Files.createDirectories(dir);
+			System.out.println("Created directory");
+		}
+
+		// Create Truststore using Key store api
+		KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+
+		// locate the default truststore
+		String filename = System.getProperty("java.home") + "/lib/security/cacerts".replace('/', File.separatorChar);
+		try (FileInputStream fis = new FileInputStream(filename)) {
+			keyStore.load(fis, "changeit".toCharArray());
+		}
+
+		Certificate cert = keyStore.getCertificate("OnPremRPAOrchChainAlias");
+		if (cert != null) {
+			System.out.println("Certificate already available.");
+			return;
+		}
+
+		// Add Certificate to Key store
+		CertificateFactory certF = CertificateFactory.getInstance("X.509");
+		cert = certF.generateCertificate(new FileInputStream(certFilePath));
+		keyStore.setCertificateEntry("OnPremRPAOrchChainAlias", cert);
+
+		trustStorePath = trustStorePath + "/cacerts";
+
+		// Write Key Store
+		try (FileOutputStream out = new FileOutputStream(trustStorePath)) {
+			keyStore.store(out, "changeit".toCharArray());
+		}
+
+		// Set Certificates to System properties
+		System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+		System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+
+		System.out.println("Completed createTrustStore() !");
 	}
 }
